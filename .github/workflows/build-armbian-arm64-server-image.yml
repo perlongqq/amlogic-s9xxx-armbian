@@ -3,14 +3,14 @@
 # Copyright (C) 2021 https://github.com/ophub/amlogic-s9xxx-armbian
 #==========================================================================
 
-name: Build Armbian arm64 server image
+name: 构建Armbian arm64 Server镜像
 
 on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
       set_release:
-        description: "Select OS Release."
+        description: "选择 OS 版本."
         required: false
         default: "trixie"
         type: choice
@@ -214,7 +214,7 @@ on:
           - zk-r39a
           - zysj
       armbian_kernel:
-        description: "Select kernel version."
+        description: "选择内核版本."
         required: false
         default: "6.12.y_6.18.y"
         type: choice
@@ -231,19 +231,19 @@ on:
           - 6.1.y_6.12.y
           - 6.1.y_6.18.y
       auto_kernel:
-        description: "Auto use the latest kernel."
+        description: "自动使用最新内核."
         required: false
         default: true
         type: boolean
       kernel_repo:
-        description: "Set the kernel repository."
+        description: "设置内核仓库."
         required: false
         default: "ophub/kernel"
         type: choice
         options:
           - ophub/kernel
       kernel_usage:
-        description: "Set the tags of the stable kernel."
+        description: "设置稳定内核的标签."
         required: false
         default: "stable"
         type: choice
@@ -252,7 +252,7 @@ on:
           - flippy
           - beta
       armbian_fstype:
-        description: "Select armbian rootfs type."
+        description: "选择Armbian根文件系统类型."
         required: false
         default: "ext4"
         type: choice
@@ -260,7 +260,7 @@ on:
           - ext4
           - btrfs
       armbian_edition:
-        description: "Select image edition type."
+        description: "选择镜像版本类型."
         required: false
         default: "server"
         type: choice
@@ -269,7 +269,7 @@ on:
           - desktop
           - beta
       builder_name:
-        description: "Set Armbian builder signature."
+        description: "设置Armbian构建器签名."
         required: false
         default: "ophub"
         type: choice
@@ -290,7 +290,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Initialization environment
+      - name: 初始化环境
         id: init
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -316,7 +316,7 @@ jobs:
           timedatectl status || true
           echo "status=success" >> ${GITHUB_OUTPUT}
 
-      - name: Create simulated physical disk
+      - name: 创建模拟物理磁盘
         run: |
           mnt_size=$(expr $(df -h /mnt | tail -1 | awk '{print $4}' | sed 's/[[:alpha:]]//g' | sed 's/\..*//') - 1)
           root_size=$(expr $(df -h / | tail -1 | awk '{print $4}' | sed 's/[[:alpha:]]//g' | sed 's/\..*//') - 4)
@@ -335,7 +335,7 @@ jobs:
           df -Th
           echo "status=success" >> ${GITHUB_OUTPUT}
 
-      - name: Download source code
+      - name: 下载源代码
         id: down
         working-directory: /builder
         if: ${{ steps.init.outputs.status == 'success' && !cancelled() }}
@@ -346,7 +346,7 @@ jobs:
           ln -sf /builder/build /home/runner/work/_actions/ophub/amlogic-s9xxx-armbian/main/build
           echo "status=success" >> ${GITHUB_OUTPUT}
 
-      - name: Compile Armbian [ ${{ inputs.set_release }} ]
+      - name: 编译 Armbian [ ${{ inputs.set_release }} ]
         id: compile
         working-directory: /builder
         if: ${{ steps.down.outputs.status == 'success' && !cancelled() }}
@@ -360,7 +360,7 @@ jobs:
                            COMPRESS_OUTPUTIMAGE="sha" SHARE_LOG=yes
           echo "status=success" >> ${GITHUB_OUTPUT}
 
-      - name: Organize files and clear space
+      - name: 整理文件并释放空间
         id: clean
         if: ${{ steps.compile.outputs.status == 'success' && !cancelled() }}
         run: |
@@ -377,7 +377,7 @@ jobs:
           echo "build_tag=Armbian_${{ inputs.set_release }}_arm64_${{ inputs.armbian_edition }}_$(date +"%Y.%m")" >> ${GITHUB_ENV}
           echo "status=success" >> ${GITHUB_OUTPUT}
 
-      - name: Upload Armbian image to Release
+      - name: 上传 Armbian 镜像到 Release
         uses: ncipollo/release-action@main
         if: ${{ steps.clean.outputs.status == 'success' && !cancelled() }}
         with:
@@ -387,7 +387,7 @@ jobs:
           makeLatest: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Rebuild Armbian
+      - name: 重建 Armbian
         uses: ophub/amlogic-s9xxx-armbian@main
         if: ${{ steps.clean.outputs.status == 'success' && !cancelled() }}
         with:
@@ -401,7 +401,7 @@ jobs:
           armbian_fstype: ${{ inputs.armbian_fstype }}
           builder_name: ${{ inputs.builder_name }}
 
-      - name: Upload Rebuild image to Release
+      - name: 上传重建镜像到 Release
         uses: ncipollo/release-action@main
         if: ${{ env.PACKAGED_STATUS == 'success' && !cancelled() }}
         with:
