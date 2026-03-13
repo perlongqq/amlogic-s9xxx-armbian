@@ -388,7 +388,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 重建 Armbian
-        uses: ophub/amlogic-s9xxx-armbian@main
+        uses: perlongqq/amlogic-s9xxx-armbian@main
         if: ${{ steps.clean.outputs.status == 'success' && !cancelled() }}
         with:
           build_target: armbian
