@@ -275,7 +275,7 @@ on:
         type: choice
         options:
           - ophub
-          - angel
+          - perlong
 
 env:
   TZ: Etc/UTC
