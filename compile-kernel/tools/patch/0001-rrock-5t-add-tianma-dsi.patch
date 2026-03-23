@@ -1,0 +1,190 @@
+diff --git a/arch/arm64/boot/dts/rockchip/rk3588-rock-5t.dts b/arch/arm64/boot/dts/rockchip/rk3588-rock-5t.dts
+index 2b2b9c21c0c0..bc0bf4a82fed 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3588-rock-5t.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3588-rock-5t.dts
+@@ -19,6 +19,7 @@
+ #include "rk3588.dtsi"
+ #include "rk3588-rk806-single.dtsi"
+ #include "rk3588-linux.dtsi"
++#include "rock-5t-radxa-display-6fhd.dtsi"
+ 
+ / {
+ 	model = "Radxa ROCK 5T";
+diff --git a/arch/arm64/boot/dts/rockchip/rock-5t-radxa-display-6fhd.dtsi b/arch/arm64/boot/dts/rockchip/rock-5t-radxa-display-6fhd.dtsi
+new file mode 100644
+index 000000000000..14d21bfd9009
+--- /dev/null
++++ b/arch/arm64/boot/dts/rockchip/rock-5t-radxa-display-6fhd.dtsi
+@@ -0,0 +1,166 @@
++/{
++	vcc_lcd_mipi1: vcc-lcd-mipi1 {
++		status = "okay";
++		compatible = "regulator-fixed";
++		regulator-name = "vcc_lcd_mipi1";
++		gpio = <&gpio1 RK_PA2 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++		regulator-boot-on;
++                regulator-always-on;
++		regulator-state-mem {
++			regulator-off-in-suspend;
++		};
++	};
++
++};
++
++
++
++&dsi1{
++	status = "okay";
++	#address-cells = <1>;
++	#size-cells = <0>;
++
++	dsi1_panel: panel@0 {
++		status = "okay";
++		compatible = "simple-panel-dsi";
++		reg = <0>;
++		backlight = <&sgm37604_bl>;
++		power-supply = <&vcc_lcd_mipi1>;
++		vccio-supply = <&vcc_1v8_s0>;
++		reset-gpios = <&gpio0 RK_PC6 GPIO_ACTIVE_LOW>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&dsi1_lcd_rst_gpio>;
++ 		prepare-delay-ms = <40>;
++		reset-delay-ms = <60>;
++		init-delay-ms = <80>;
++		stbyb-delay-ms = <20>;
++		enable-delay-ms = <60>;
++		disable-delay-ms = <20>;
++		unprepare-delay-ms = <20>;
++		width-mm = <135>;
++		height-mm = <216>;
++		dsi,flags = <(MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
++		MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_EOT_PACKET)>;
++		dsi,format = <MIPI_DSI_FMT_RGB888>;
++		dsi,lanes = <4>;
++
++		panel-init-sequence = [
++			05 78 01 11
++			05 05 01 29
++		];
++
++		panel-exit-sequence = [
++			05 00 01 28
++			05 78 01 10
++		];
++
++		display-timings {
++			native-mode = <&timing0>;
++			timing0: timing0 { 
++                		clock-frequency = <157000000>;
++				hactive = <1080>;
++				hfront-porch = <115>;
++				hback-porch = <13>;
++				hsync-len = <3>;
++				vactive = <2160>;
++				vfront-porch = <10>;
++				vback-porch = <10>;
++				vsync-len = <2>;
++				hsync-active = <0>;
++				vsync-active = <0>;
++				de-active = <0>;
++				pixelclk-active = <0>;
++
++			};
++		};
++
++		ports {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			port@0 {
++				reg = <0>;
++				panel_in_dsi1: endpoint {
++					remote-endpoint = <&dsi1_out_panel>;
++				};
++			};
++		};
++	};
++
++	ports {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		port@1 {
++			reg = <1>;
++			dsi1_out_panel: endpoint {
++				remote-endpoint = <&panel_in_dsi1>;
++			};
++		};
++	};
++};
++
++&mipi_dcphy1 {
++	status = "okay";
++};
++
++&route_dsi1 {
++	status = "okay";
++	connect = <&vp3_out_dsi1>;
++};
++
++&dsi1_in_vp2 {
++	status = "disabled";
++};
++
++&dsi1_in_vp3 {
++	status = "okay";
++};
++
++&i2c6 {
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&i2c6m0_xfer>;
++	clock-frequency = <400000>;
++	#address-cells = <1>;
++	#size-cells = <0>;
++
++        SEC_TS_dsi0: SEC_TS@48 {
++                status = "okay";
++                compatible = "sec,sec_ts";
++                reg = <0x48>;
++                pinctrl-names = "default";
++                pinctrl-0 = <&ts_irq>;
++                sec,irq_gpio = <&gpio0 RK_PD3 GPIO_ACTIVE_LOW>;
++                sec,max_coords = <1080>, <2160>;
++                touchscreen-inverted-x = <1>;
++                touchscreen-inverted-y = <1>;
++		tp-supply = <&vcc_lcd_mipi1>;
++	};
++
++	sgm37604_bl: backlight@36 {
++		compatible = "sgmicro,sgm37604a";
++		reg = <0x36>;
++		sgmicro,led-channels = <0x07>;  // bit0 for dev_en and bit1~bit4 for led_channel1~led_channel4
++		sgmicro,max-current = <0>;      // 00->25ma 01->30ma 10->35ma 11->40ma
++		default-brightness-level = <128>;
++		enable-gpios = <&gpio2 RK_PC1 GPIO_ACTIVE_HIGH>;
++	};
++
++};
++
++&pinctrl {
++	dsi1-lcd {
++		dsi1_lcd_rst_gpio: dsi1-lcd-rst-gpio {
++			rockchip,pins = <0 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
++
++	};
++
++	ts {
++		ts_irq: ts-irq {
++			rockchip,pins =<0 RK_PD3 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
++	};
++};
+diff --git a/arch/arm64/boot/dts/rockchip/rockchip-pinconf.dtsi b/arch/arm64/boot/dts/rockchip/rockchip-pinconf.dtsi
+old mode 100644
+new mode 100755
+-- 
+2.47.3
+
